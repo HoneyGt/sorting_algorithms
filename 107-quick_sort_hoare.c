@@ -1,10 +1,9 @@
 #include "sort.h"
 
 void swap_ints(int *a, int *b);
-void bitonic_merge(int *array, size_t size, size_t start, size_t seq,
-		char flow);
-void bitonic_seq(int *array, size_t size, size_t start, size_t seq, char flow);
-void bitonic_sort(int *array, size_t size);
+int hoare_partition(int *array, size_t size, int left, int right);
+void hoare_sort(int *array, size_t size, int left, int right);
+void quick_sort_hoare(int *array, size_t size);
 
 /**
  * swap_ints - Swap two integers in an array.
@@ -21,71 +20,76 @@ void swap_ints(int *a, int *b)
 }
 
 /**
- * bitonic_merge - Sort a bitonic sequence inside an array of integers.
- * @array: An array of integers.
+ * hoare_partition - Order a subset of an array of integers
+ *                   according to the hoare partition scheme.
+ * @array: The array of integers.
  * @size: The size of the array.
- * @start: The starting index of the sequence in array to sort.
- * @seq: The size of the sequence to sort.
- * @flow: The direction to sort in.
+ * @left: The starting index of the subset to order.
+ * @right: The ending index of the subset to order.
+ *
+ * Return: The final partition index.
+ *
+ * Description: Uses the last element of the partition as the pivot.
+ * Prints the array after each swap of two elements.
  */
-void bitonic_merge(int *array, size_t size, size_t start, size_t seq,
-		char flow)
+int hoare_partition(int *array, size_t size, int left, int right)
 {
-	size_t i, jump = seq / 2;
+	int pivot, above, below;
 
-	if (seq > 1)
+	pivot = array[right];
+	for (above = left - 1, below = right + 1; above < below;)
 	{
-		for (i = start; i < start + jump; i++)
+		do {
+			above++;
+		} while (array[above] < pivot);
+		do {
+			below--;
+		} while (array[below] > pivot);
+
+		if (above < below)
 		{
-			if ((flow == UP && array[i] > array[i + jump]) ||
-			    (flow == DOWN && array[i] < array[i + jump]))
-				swap_ints(array + i, array + i + jump);
+			swap_ints(array + above, array + below);
+			print_array(array, size);
 		}
-		bitonic_merge(array, size, start, jump, flow);
-		bitonic_merge(array, size, start + jump, jump, flow);
 	}
+
+	return (above);
 }
 
 /**
- * bitonic_seq - Convert an array of integers into a bitonic sequence.
- * @array: An array of integers.
+ * hoare_sort - Implement the quicksort algorithm through recursion.
+ * @array: An array of integers to sort.
  * @size: The size of the array.
- * @start: The starting index of a block of the building bitonic sequence.
- * @seq: The size of a block of the building bitonic sequence.
- * @flow: The direction to sort the bitonic sequence block in.
+ * @left: The starting index of the array partition to order.
+ * @right: The ending index of the array partition to order.
+ *
+ * Description: Uses the Hoare partition scheme.
  */
-void bitonic_seq(int *array, size_t size, size_t start, size_t seq, char flow)
+void hoare_sort(int *array, size_t size, int left, int right)
 {
-	size_t cut = seq / 2;
-	char *str = (flow == UP) ? "UP" : "DOWN";
+	int part;
 
-	if (seq > 1)
+	if (right - left > 0)
 	{
-		printf("Merging [%lu/%lu] (%s):\n", seq, size, str);
-		print_array(array + start, seq);
-
-		bitonic_seq(array, size, start, cut, UP);
-		bitonic_seq(array, size, start + cut, cut, DOWN);
-		bitonic_merge(array, size, start, seq, flow);
-
-		printf("Result [%lu/%lu] (%s):\n", seq, size, str);
-		print_array(array + start, seq);
+		part = hoare_partition(array, size, left, right);
+		hoare_sort(array, size, left, part - 1);
+		hoare_sort(array, size, part, right);
 	}
 }
 
 /**
- * bitonic_sort - Sort an array of integers in ascending
- *                order using the bitonic sort algorithm.
+ * quick_sort_hoare - Sort an array of integers in ascending
+ *                    order using the quicksort algorithm.
  * @array: An array of integers.
  * @size: The size of the array.
  *
- * Description: Prints the array after each swap. Only works for
- * size = 2^k where k >= 0 (ie. size equal to powers of 2).
+ * Description: Uses the Hoare partition scheme. Prints
+ * the array after each swap of two elements.
  */
-void bitonic_sort(int *array, size_t size)
+void quick_sort_hoare(int *array, size_t size)
 {
 	if (array == NULL || size < 2)
 		return;
 
-	bitonic_seq(array, size, 0, size, UP);
+	hoare_sort(array, size, 0, size - 1);
 }
